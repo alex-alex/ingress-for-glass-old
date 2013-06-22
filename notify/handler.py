@@ -125,16 +125,18 @@ class NotifyHandler(webapp2.RequestHandler):
 	        lng = int(gameEntity[2]["locationE6"]["lngE6"])/1E6
 
 	        body = {}
-	        map = "glass://map?w=330&h=240&"
+	        map = "glass://map?w=200&h=200&"
 	        #map += "marker=0;%s,%s" % (location["latitude"], location["longitude"])
 	        map += "&marker=0;%s,%s" % (lat, lng)
-	        html = "<article><figure>"
-        
-	        html += "<div style=\"margin-top: 40px;\"><p class=\"text-small align-center\">%s</p></div>" % name
 
-	        html += "</figure>"
-	        html += "<section><img src=\"%s\" width=\"330\" height=\"240\"></section></article>" % map
-        
+	        html = "<article><section>"
+	        html += "<div class=\"layout-two-column\">"
+	        html += "<div class=\"align-center\"><img src=\"%s\" width=\"200\" height=\"200\"></div>" % map
+	        html += "<div class=\"align-center\"><img src=\"%s\" width=\"200\" height=\"200\"></div>" % gameEntity[2]["imageByUrl"]["imageUrl"]
+	        html += "</div></section>"
+	        html += "<footer><p>%s</p></footer>" % name
+	        html += "</article>"
+
 	        body["html"] = html
 	        body["bundleId"] = _BUNDLE_ID
 	        body["isBundleCover"] = False
@@ -183,11 +185,8 @@ class NotifyHandler(webapp2.RequestHandler):
             body=body, media_body=media).execute()
         # Only handle the first successful action.
         break
-	  elif user_action.get('type') == 'HACK':
+      elif user_action.get('type') == 'HACK':
         item = self.mirror_service.timeline().get(id=data['itemId']).execute()
-		
-		
-		
         break
       else:
         logging.info(

@@ -125,9 +125,7 @@ class OAuthCodeExchangeHandler(OAuthBaseRequestHandler):
           'collection': 'locations',
           # TODO: hash the userToken.
           'userToken': userid,
-          'callbackUrl': util.get_full_url(self, '/notify'),
-		  "itemId": "latest",
-		  "operation": "UPDATE"
+          'callbackUrl': util.get_full_url(self, '/notify')
       }
       mirror_service.subscriptions().insert(body=subscription_body).execute()
 
@@ -140,13 +138,13 @@ class OAuthCodeExchangeHandler(OAuthBaseRequestHandler):
       #mirror_service.contacts().insert(body=contact_body).execute()
 	  
       # Insert welcome message.
-      timeline_item_body = {
-          'text': 'Niantic software online.',
-          'notification': {
-              'level': 'DEFAULT'
-          }
-      }
-      mirror_service.timeline().insert(body=timeline_item_body).execute()
+      #timeline_item_body = {
+      #    'text': 'Niantic software online.',
+      #    'notification': {
+      #        'level': 'DEFAULT'
+      #    }
+      #}
+      #mirror_service.timeline().insert(body=timeline_item_body).execute()
 	  
     else:
       logging.info('Post auth tasks are not supported on staging.')
