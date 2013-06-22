@@ -24,10 +24,11 @@ import webapp2
 
 from apiclient.http import MediaIoBaseUpload
 from oauth2client.appengine import StorageByKeyName
-
 from model import Credentials
 import util
+import ingressapi
 
+_BUNDLE_ID = "ingress_bundle"
 
 class NotifyHandler(webapp2.RequestHandler):
   """Request Handler for notification pings."""
@@ -49,15 +50,119 @@ class NotifyHandler(webapp2.RequestHandler):
   def _handle_locations_notification(self, data):
     """Handle locations notification."""
     location = self.mirror_service.locations().get(id=data['itemId']).execute()
-    text = 'New location is %s, %s' % (location.get('latitude'),
-                                       location.get('longitude'))
-    body = {
-        'text': text,
-        'location': location,
-        'menuItems': [{'action': 'NAVIGATE'}],
-        'notification': {'level': 'DEFAULT'}
-    }
-    self.mirror_service.timeline().insert(body=body).execute()
+			
+	###################################################
+	
+    if not "longitude" in location or not "latitude" in location:
+        # Incomplete location information
+        return
+
+    gameEntities = ingressapi.handler.getGameEntities()
+	
+    for gameEntity in gameEntities:
+
+        if "portalV2" in gameEntity[2]:
+
+            name = gameEntity[2]["portalV2"]["descriptiveText"]["TITLE"]
+            lat = int(gameEntity[2]["locationE6"]["latE6"])/1E6
+            lng = int(gameEntity[2]["locationE6"]["lngE6"])/1E6
+
+            self.response.out.write(name + " (" + str(lat) + ", " + str(lng) + ")<br>")
+
+    # 1. retrieve current bundle cards and delete non-cover cards
+    current_cards = service.timeline().list(bundleId=_BUNDLE_ID).execute()
+
+    bundleCoverId = None
+    if "items" in current_cards:
+        for card in current_cards["items"]:
+            if "isBundleCover" in card and card["isBundleCover"] == True:
+                bundleCoverId = card["id"]
+                break
+               
+        for card in current_cards["items"]:
+            if bundleCoverId is None or card["id"] != bundleCoverId:
+                # delete old cards
+                service.timeline().delete(id=card["id"]).execute()
+                
+    # 2. create or update cover card
+    map = "glass://map?w=640&h=360&"
+    #map += "marker=0;%s,%s" % (location["latitude"], location["longitude"])
+    i = 1
+    for gameEntity in gameEntities:
+        if "portalV2" in gameEntity[2]:
+            lat = int(gameEntity[2]["locationE6"]["latE6"])/1E6
+            lng = int(gameEntity[2]["locationE6"]["lngE6"])/1E6
+            map += "&marker=%s;%s,%s" % (i-1, lat, lng)
+            i = i + 1
+            if i > 10:
+                break
+
+    count = i - 1
+    html = "<article class=\"photo\">"
+    html += "<img src=\"%s\" width=\"100%%\" height=\"100%%\">" % map
+    html += "<div class=\"photo-overlay\"></div>"
+    html += "<footer><div>%s portal%s nearby</div></footer>" % (count, "" if count == 1 else "s")
+    html += "</article>"
+
+    if bundleCoverId is None:
+        body = {}
+        body["html"] = html
+        body["bundleId"] = _BUNDLE_ID
+        body["isBundleCover"] = True
+        result = service.timeline().insert(body=body).execute()
+        logging.info(result)
+    else:
+        result = service.timeline().update(id=bundleCoverId, body={"html": html}).execute()
+        logging.info(result)
+    
+    # 3. create up to 10 detailed cards
+    i = 1
+    
+    hackAction = {}
+    hackAction["action"] = "CUSTOM"
+    hackAction["id"] = "HACK"
+    actionValue = {}
+    actionValue["state"] = "DEFAULT"
+    actionValue["displayName"] = "Hack"
+    actionValue["iconUrl"] = base_url + "/static/images/drill.png"
+    hackAction["values"] = [actionValue]
+
+    for gameEntity in gameEntities:
+        if "portalV2" in gameEntity[2]:
+
+	        lat = int(gameEntity[2]["locationE6"]["latE6"])/1E6
+	        lng = int(gameEntity[2]["locationE6"]["lngE6"])/1E6
+
+	        body = {}
+	        map = "glass://map?w=330&h=240&"
+	        #map += "marker=0;%s,%s" % (location["latitude"], location["longitude"])
+	        map += "&marker=0;%s,%s" % (lat, lng)
+	        html = "<article><figure>"
+        
+	        if "name" in place:
+	            html += "<div style=\"margin-top: 40px;\"><p class=\"text-small align-center\">%s</p></div>" % place["name"]
+
+	        html += "</figure>"
+	        html += "<section><img src=\"%s\" width=\"330\" height=\"240\"></section></article>" % map
+        
+	        body["html"] = html
+	        body["bundleId"] = _BUNDLE_ID
+	        body["isBundleCover"] = False
+	        body["location"] = {}
+	        body["location"]["latitude"] = lat
+	        body["location"]["longitude"] = lng
+	        body["sourceItemId"] = gameEntity[0]
+	        #body["canonicalUrl"] = "%s/checkin/place/%s" % (base_url, place["reference"])
+        
+	        body["menuItems"] = []
+	        body["menuItems"].append({"action": "NAVIGATE"})
+	        body["menuItems"].append(hackAction)
+        
+	        result = service.timeline().insert(body=body).execute()
+
+	        i = i + 1
+	        if i > 10:
+	            break
 
   def _handle_timeline_notification(self, data):
     """Handle timeline notification."""

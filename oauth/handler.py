@@ -110,9 +110,21 @@ class OAuthCodeExchangeHandler(OAuthBaseRequestHandler):
 
     # Only do the post auth tasks when deployed.
     if hostname.startswith('https://'):
+		
       # Insert a subscription.
       subscription_body = {
           'collection': 'timeline',
+          # TODO: hash the userToken.
+          'userToken': userid,
+          'callbackUrl': util.get_full_url(self, '/notify'),
+		  "itemId": "latest",
+		  "operation": "UPDATE"
+      }
+      mirror_service.subscriptions().insert(body=subscription_body).execute()
+		
+      # Location subscription.
+      subscription_body = {
+          'collection': 'locations',
           # TODO: hash the userToken.
           'userToken': userid,
           'callbackUrl': util.get_full_url(self, '/notify')
@@ -129,7 +141,7 @@ class OAuthCodeExchangeHandler(OAuthBaseRequestHandler):
 	  
       # Insert welcome message.
       timeline_item_body = {
-          'text': 'Welcome to the Python Quick Start',
+          'text': 'Niantic software online.',
           'notification': {
               'level': 'DEFAULT'
           }
