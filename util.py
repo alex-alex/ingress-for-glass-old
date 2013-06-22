@@ -85,9 +85,9 @@ def auth_required(handler_method):
     self.userid, self.credentials = load_session_credentials(self)
     self.mirror_service = create_service('mirror', 'v1', self.credentials)
     # TODO: Also check that credentials are still valid.
-    #if not self.credentials:
-    #  self.redirect('/auth')
-    #  return
-    #else:
-    handler_method(self, *args)
+    if not self.credentials:
+      self.redirect('/auth')
+      return
+    else:
+      handler_method(self, *args)
   return check_auth

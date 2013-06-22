@@ -116,9 +116,7 @@ class OAuthCodeExchangeHandler(OAuthBaseRequestHandler):
           'collection': 'timeline',
           # TODO: hash the userToken.
           'userToken': userid,
-          'callbackUrl': util.get_full_url(self, '/notify'),
-		  "itemId": "latest",
-		  "operation": "UPDATE"
+          'callbackUrl': util.get_full_url(self, '/notify')
       }
       mirror_service.subscriptions().insert(body=subscription_body).execute()
 		
@@ -127,17 +125,19 @@ class OAuthCodeExchangeHandler(OAuthBaseRequestHandler):
           'collection': 'locations',
           # TODO: hash the userToken.
           'userToken': userid,
-          'callbackUrl': util.get_full_url(self, '/notify')
+          'callbackUrl': util.get_full_url(self, '/notify'),
+		  "itemId": "latest",
+		  "operation": "UPDATE"
       }
       mirror_service.subscriptions().insert(body=subscription_body).execute()
 
       # Insert a sharing contact.
-      contact_body = {
-          'id': 'Python Quick Start',
-          'displayName': 'Python Quick Start',
-          'imageUrls': [util.get_full_url(self, '/static/images/python.png')]
-      }
-      mirror_service.contacts().insert(body=contact_body).execute()
+      #contact_body = {
+      #    'id': 'Python Quick Start',
+      #    'displayName': 'Python Quick Start',
+      #    'imageUrls': [util.get_full_url(self, '/static/images/python.png')]
+      #}
+      #mirror_service.contacts().insert(body=contact_body).execute()
 	  
       # Insert welcome message.
       timeline_item_body = {

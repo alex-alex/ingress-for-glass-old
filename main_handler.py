@@ -22,6 +22,7 @@ import jinja2
 import logging
 import os
 import webapp2
+import ingressapi
 
 from google.appengine.api import memcache
 from google.appengine.api import urlfetch
@@ -34,6 +35,8 @@ from oauth2client.appengine import StorageByKeyName
 
 from model import Credentials
 import util
+
+_BUNDLE_ID = "ingress_bundle"
 
 
 jinja_environment = jinja2.Environment(
@@ -77,16 +80,16 @@ class MainHandler(webapp2.RequestHandler):
     except errors.HttpError:
       logging.info('Unable to find Python Quick Start contact.')
 
-    #timeline_items = self.mirror_service.timeline().list(maxResults=3).execute()
-    #template_values['timelineItems'] = timeline_items.get('items', [])
-	#
-    #subscriptions = self.mirror_service.subscriptions().list().execute()
-    #for subscription in subscriptions.get('items', []):
-    #  collection = subscription.get('collection')
-    #  if collection == 'timeline':
-    #    template_values['timelineSubscriptionExists'] = True
-    #  elif collection == 'locations':
-    #    template_values['locationSubscriptionExists'] = True
+    timeline_items = self.mirror_service.timeline().list(maxResults=3).execute()
+    template_values['timelineItems'] = timeline_items.get('items', [])
+	
+    subscriptions = self.mirror_service.subscriptions().list().execute()
+    for subscription in subscriptions.get('items', []):
+      collection = subscription.get('collection')
+      if collection == 'timeline':
+        template_values['timelineSubscriptionExists'] = True
+      elif collection == 'locations':
+        template_values['locationSubscriptionExists'] = True
 
     template = jinja_environment.get_template('templates/index.html')
     self.response.out.write(template.render(template_values))
