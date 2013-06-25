@@ -127,7 +127,7 @@ class NotifyHandler(webapp2.RequestHandler):
 	        body = {}
 	        map = "glass://map?w=200&h=200&"
 	        #map += "marker=0;%s,%s" % (location["latitude"], location["longitude"])
-	        map += "&marker=0;%s,%s" % (lat, lng)
+	        map += "marker=0;%s,%s" % (lat, lng)
 
 	        html = "<article><section>"
 	        html += "<div class=\"layout-two-column\">"
