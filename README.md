@@ -1,14 +1,8 @@
-Ingress port for Google Glass
+**This project is deprecated.** Details about new GDK version [here](http://studnicka.me/ingress-glass).
+
+Ingress for Google Glass
 ========================
-
 Shows nearest portals around current location.
-
-Known bugs
-----------
-
-- Location is statically set to Wenceslas Square, Prague. I have to somehow implement s2-geometry library in Python or transfer this project to Java.
-- Hacking is not working
-- You can not login using your own account
 
 Screenshots
 -----------
